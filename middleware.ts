@@ -1,0 +1,30 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Protect /admin routes (except /admin/login)
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    const sessionCookie = request.cookies.get("admin_feedback_session")?.value;
+    if (!sessionCookie) {
+      const loginUrl = new URL("/admin/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // Redirect authenticated admins away from /admin/login to /admin/dashboard
+  if (pathname === "/admin/login") {
+    const sessionCookie = request.cookies.get("admin_feedback_session")?.value;
+    if (sessionCookie) {
+      const dashboardUrl = new URL("/admin/dashboard", request.url);
+      return NextResponse.redirect(dashboardUrl);
+    }
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/admin/:path*"],
+};
