@@ -291,6 +291,7 @@ export function PublicFeedbackForm() {
                     required
                     type="tel"
                     maxLength={10}
+                    placeholder="9876543210"
                     autoComplete="off"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
@@ -408,6 +409,7 @@ export function PublicFeedbackForm() {
                   <textarea
                     required
                     rows={3}
+                    placeholder="Enter purpose of visit..."
                     autoComplete="off"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
