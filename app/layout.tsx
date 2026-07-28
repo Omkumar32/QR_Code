@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "GlobalWebify | Visitor Registration & Management System",
   description:
     "Production-grade Visitor Registration and Management System by GlobalWebify.",
+  icons: {
+    icon: "/globalwebify-logo.png",
+    apple: "/globalwebify-logo.png",
+    shortcut: "/globalwebify-logo.png",
+  },
 };
 
 export default function RootLayout({
