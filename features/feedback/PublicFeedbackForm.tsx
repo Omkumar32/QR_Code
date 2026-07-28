@@ -76,6 +76,11 @@ export function PublicFeedbackForm() {
       if (typeof window !== "undefined") {
         localStorage.setItem("feedback_submitted_at", Date.now().toString());
       }
+      // Clear form fields so next visitor sees a blank form
+      setName("");
+      setPhone("");
+      setEmail("");
+      setReason("");
       setSubmitted(true);
     } catch (err: any) {
       setErrorMessage(err.message || "An error occurred while submitting.");
@@ -214,6 +219,7 @@ export function PublicFeedbackForm() {
                     required
                     type="text"
                     placeholder="Name"
+                    autoComplete="off"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     style={{
@@ -272,6 +278,7 @@ export function PublicFeedbackForm() {
                     required
                     type="tel"
                     maxLength={10}
+                    autoComplete="off"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                     style={{
@@ -331,6 +338,7 @@ export function PublicFeedbackForm() {
                   <input
                     type="email"
                     placeholder="example@gmail.com"
+                    autoComplete="off"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     style={{
@@ -387,6 +395,7 @@ export function PublicFeedbackForm() {
                   <textarea
                     required
                     rows={3}
+                    autoComplete="off"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     style={{
