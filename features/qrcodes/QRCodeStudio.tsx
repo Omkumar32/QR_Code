@@ -1,18 +1,33 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
-import { QrCode, Download, Printer, Copy } from "lucide-react";
+import { QrCode, Download, Printer, Copy, Save, CheckCircle, Loader2 } from "lucide-react";
 
 export function QRCodeStudio() {
   const [targetUrl, setTargetUrl] = useState<string>("");
+  const [savedUrl, setSavedUrl] = useState<string>("");
   const [qrColor, setQrColor] = useState<string>("#0E9A51");
   const [previewDataUrl, setPreviewDataUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Load saved QR URL from database
   useEffect(() => {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://qr-code-beta-bice.vercel.app";
-    setTargetUrl(`${appUrl}/feedback`);
+    fetch("/api/admin/settings/qr-url")
+      .then((r) => r.json())
+      .then((data) => {
+        setTargetUrl(data.url);
+        setSavedUrl(data.url);
+      })
+      .catch(() => {
+        const defaultUrl = "https://qr-code-beta-bice.vercel.app/feedback";
+        setTargetUrl(defaultUrl);
+        setSavedUrl(defaultUrl);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -24,6 +39,27 @@ export function QRCodeStudio() {
       }).then(setPreviewDataUrl);
     }
   }, [targetUrl, qrColor]);
+
+  const saveUrl = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings/qr-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: targetUrl }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSavedUrl(targetUrl);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to save URL:", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const downloadPNG = () => {
     if (!previewDataUrl) return;
@@ -56,6 +92,8 @@ export function QRCodeStudio() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const isUrlChanged = targetUrl !== savedUrl;
 
   return (
     <div
@@ -102,21 +140,36 @@ export function QRCodeStudio() {
           </div>
         </div>
 
+        {/* Target URL Input */}
         <div>
           <label
             style={{
-              display: "block",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               fontSize: "13px",
               fontWeight: 600,
               color: "#4A4A4A",
               marginBottom: "6px",
             }}
           >
-            Target Registration URL
+            <span>Target Registration URL</span>
+            {isUrlChanged && (
+              <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 600 }}>
+                ● Unsaved changes
+              </span>
+            )}
+            {!isUrlChanged && savedUrl && (
+              <span style={{ fontSize: "11px", color: "#0E9A51", fontWeight: 600 }}>
+                ✓ Saved
+              </span>
+            )}
           </label>
           <input
-            value={targetUrl}
+            value={loading ? "Loading..." : targetUrl}
             onChange={(e) => setTargetUrl(e.target.value)}
+            disabled={loading}
+            placeholder="https://your-domain.com/feedback"
             style={{
               width: "100%",
               height: "40px",
@@ -125,15 +178,52 @@ export function QRCodeStudio() {
               fontSize: "13px",
               color: "#181818",
               borderRadius: "8px",
-              border: "1px solid #E2E8F0",
+              border: `1px solid ${isUrlChanged ? "#f59e0b" : "#E2E8F0"}`,
               outline: "none",
-              backgroundColor: "#FFFFFF",
+              backgroundColor: loading ? "#f8fafc" : "#FFFFFF",
               fontFamily: "monospace",
               boxSizing: "border-box",
+              transition: "border-color 0.2s",
             }}
           />
+          <p style={{ fontSize: "11px", color: "#4A4A4A", margin: "6px 0 0 0" }}>
+            Visitors will be sent to this URL when they scan the QR code.
+          </p>
         </div>
 
+        {/* Save Button */}
+        <button
+          onClick={saveUrl}
+          disabled={saving || !isUrlChanged || loading}
+          style={{
+            width: "100%",
+            height: "42px",
+            borderRadius: "8px",
+            fontSize: "13px",
+            fontWeight: 600,
+            backgroundColor: saved ? "#0E9A51" : isUrlChanged ? "#0E9A51" : "#E2E8F0",
+            color: saved || isUrlChanged ? "#FFFFFF" : "#4A4A4A",
+            border: "none",
+            cursor: saving || !isUrlChanged || loading ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            transition: "background-color 0.2s",
+            opacity: saving || !isUrlChanged ? 0.8 : 1,
+          }}
+        >
+          {saving ? (
+            <Loader2 style={{ width: "15px", height: "15px", animation: "spin 1s linear infinite" }} />
+          ) : saved ? (
+            <CheckCircle style={{ width: "15px", height: "15px" }} />
+          ) : (
+            <Save style={{ width: "15px", height: "15px" }} />
+          )}
+          <span>{saving ? "Saving..." : saved ? "URL Saved!" : "Save QR Target URL"}</span>
+        </button>
+
+        {/* Color Picker */}
         <div>
           <label
             style={{
@@ -166,6 +256,7 @@ export function QRCodeStudio() {
           </div>
         </div>
 
+        {/* Copy Link Button */}
         <button
           onClick={copyLink}
           style={{
@@ -182,7 +273,6 @@ export function QRCodeStudio() {
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
-            marginTop: "8px",
           }}
         >
           <Copy style={{ width: "15px", height: "15px" }} />
@@ -348,6 +438,13 @@ export function QRCodeStudio() {
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
