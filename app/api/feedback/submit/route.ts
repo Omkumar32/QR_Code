@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, ensureDbInitialized } from "@/lib/prisma";
 import { feedbackFormSchema } from "@/schemas/feedback";
 
 export async function POST(request: Request) {
@@ -15,6 +15,9 @@ export async function POST(request: Request) {
 
     const { name, email = "", phone, reason, rating = 5, message = "Visitor Registration" } = validationResult.data;
     const finalEmail = email.trim() || "N/A";
+
+    // Ensure database tables exist in serverless environment
+    await ensureDbInitialized();
 
     // 2. Duplicate Submission Check (Within 5 Minutes for same phone or email if provided)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -49,6 +52,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, feedbackId: feedback.id });
   } catch (err: any) {
     console.error("Feedback Submission API Error:", err);
-    return NextResponse.json({ error: "Server error submitting feedback" }, { status: 500 });
+    return NextResponse.json(
+      { error: err?.message || "Server error submitting feedback" },
+      { status: 500 }
+    );
   }
 }
