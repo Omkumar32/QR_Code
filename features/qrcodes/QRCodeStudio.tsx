@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import QRCode from "qrcode";
-import { QrCode, Download, Printer, Copy, Save, CheckCircle, Loader2 } from "lucide-react";
+import { QrCode, Download, Printer, Copy, Save, CheckCircle, Loader2, Star } from "lucide-react";
 
 export function QRCodeStudio() {
   const [targetUrl, setTargetUrl] = useState<string>("");
@@ -14,18 +14,29 @@ export function QRCodeStudio() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load saved QR URL from database
+  const [googleReviewUrl, setGoogleReviewUrl] = useState<string>("");
+  const [savedGoogleReviewUrl, setSavedGoogleReviewUrl] = useState<string>("");
+  const [savingReviewUrl, setSavingReviewUrl] = useState(false);
+  const [savedReviewUrl, setSavedReviewUrl] = useState(false);
+
+  // Load saved QR URL & Google Review URL from database
   useEffect(() => {
-    fetch("/api/admin/settings/qr-url")
-      .then((r) => r.json())
-      .then((data) => {
-        setTargetUrl(data.url);
-        setSavedUrl(data.url);
+    Promise.all([
+      fetch("/api/admin/settings/qr-url").then((r) => r.json()),
+      fetch("/api/settings/google-review-url").then((r) => r.json()),
+    ])
+      .then(([qrData, reviewData]) => {
+        if (qrData?.url) {
+          setTargetUrl(qrData.url);
+          setSavedUrl(qrData.url);
+        }
+        if (reviewData?.url) {
+          setGoogleReviewUrl(reviewData.url);
+          setSavedGoogleReviewUrl(reviewData.url);
+        }
       })
-      .catch(() => {
-        const defaultUrl = "https://qr-code-beta-bice.vercel.app/feedback";
-        setTargetUrl(defaultUrl);
-        setSavedUrl(defaultUrl);
+      .catch((err) => {
+        console.error("Error fetching settings:", err);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -94,6 +105,29 @@ export function QRCodeStudio() {
   };
 
   const isUrlChanged = targetUrl !== savedUrl;
+
+  const saveGoogleReviewUrl = async () => {
+    setSavingReviewUrl(true);
+    try {
+      const res = await fetch("/api/settings/google-review-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: googleReviewUrl }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSavedGoogleReviewUrl(googleReviewUrl);
+        setSavedReviewUrl(true);
+        setTimeout(() => setSavedReviewUrl(false), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to save Google Review URL:", err);
+    } finally {
+      setSavingReviewUrl(false);
+    }
+  };
+
+  const isReviewUrlChanged = googleReviewUrl !== savedGoogleReviewUrl;
 
   return (
     <div
@@ -278,6 +312,98 @@ export function QRCodeStudio() {
           <Copy style={{ width: "15px", height: "15px" }} />
           <span>{copied ? "Link Copied!" : "Copy Target URL"}</span>
         </button>
+
+        <div style={{ borderTop: "1px solid #E2E8F0", paddingTop: "18px", marginTop: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+            <Star style={{ width: "16px", height: "16px", color: "#f59e0b", fill: "#f59e0b" }} />
+            <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#181818", margin: 0 }}>
+              Google Review URL Setting
+            </h3>
+          </div>
+
+          <div>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "#4A4A4A",
+                marginBottom: "6px",
+              }}
+            >
+              <span>Google Review Link</span>
+              {isReviewUrlChanged && (
+                <span style={{ fontSize: "11px", color: "#f59e0b", fontWeight: 600 }}>
+                  ● Unsaved changes
+                </span>
+              )}
+              {!isReviewUrlChanged && savedGoogleReviewUrl && (
+                <span style={{ fontSize: "11px", color: "#0E9A51", fontWeight: 600 }}>
+                  ✓ Saved
+                </span>
+              )}
+            </label>
+            <input
+              value={loading ? "Loading..." : googleReviewUrl}
+              onChange={(e) => setGoogleReviewUrl(e.target.value)}
+              disabled={loading}
+              placeholder="https://www.google.com/search?q=your-business..."
+              style={{
+                width: "100%",
+                height: "40px",
+                paddingLeft: "12px",
+                paddingRight: "12px",
+                fontSize: "12px",
+                color: "#181818",
+                borderRadius: "8px",
+                border: `1px solid ${isReviewUrlChanged ? "#f59e0b" : "#E2E8F0"}`,
+                outline: "none",
+                backgroundColor: loading ? "#f8fafc" : "#FFFFFF",
+                fontFamily: "monospace",
+                boxSizing: "border-box",
+                transition: "border-color 0.2s",
+              }}
+            />
+            <p style={{ fontSize: "11px", color: "#4A4A4A", margin: "6px 0 10px 0" }}>
+              Visitors will see a button linking to this review page after registering.
+            </p>
+          </div>
+
+          <button
+            onClick={saveGoogleReviewUrl}
+            disabled={savingReviewUrl || !isReviewUrlChanged || loading}
+            style={{
+              width: "100%",
+              height: "42px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: 600,
+              backgroundColor: savedReviewUrl ? "#0E9A51" : isReviewUrlChanged ? "#0E9A51" : "#E2E8F0",
+              color: savedReviewUrl || isReviewUrlChanged ? "#FFFFFF" : "#4A4A4A",
+              border: "none",
+              cursor: savingReviewUrl || !isReviewUrlChanged || loading ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              transition: "background-color 0.2s",
+              opacity: savingReviewUrl || !isReviewUrlChanged ? 0.8 : 1,
+            }}
+          >
+            {savingReviewUrl ? (
+              <Loader2 style={{ width: "15px", height: "15px", animation: "spin 1s linear infinite" }} />
+            ) : savedReviewUrl ? (
+              <CheckCircle style={{ width: "15px", height: "15px" }} />
+            ) : (
+              <Save style={{ width: "15px", height: "15px" }} />
+            )}
+            <span>
+              {savingReviewUrl ? "Saving..." : savedReviewUrl ? "Review URL Saved!" : "Save Google Review URL"}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* 2. Interactive Printable Poster Card */}

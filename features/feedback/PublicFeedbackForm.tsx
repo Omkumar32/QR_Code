@@ -8,6 +8,8 @@ import {
   Mail,
   User,
   FileText,
+  Star,
+  ExternalLink,
 } from "lucide-react";
 
 export function PublicFeedbackForm() {
@@ -15,6 +17,18 @@ export function PublicFeedbackForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [reason, setReason] = useState("");
+  const [googleReviewUrl, setGoogleReviewUrl] = useState(
+    "https://www.google.com/search?q=globalwebify&oq=globalwebify&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIGCAEQRRg8Mg0IAhAuGK8BGMcBGIAEMgoIAxAAGIAEGKIEMgcIBBAAGO8FMgYIBRBFGDwyBggGEEUYPTIGCAcQRRg80gEINjEyNWowajeoAgiwAgHxBQ55tcC_XKng8QUOebXAv1yp4A&sourceid=chrome&source=chrome.ob&ie=UTF-8#lpg=cid:CgIgAQ%3D%3D,ik:CAoSHENJQUJJaENjaFhLT0tMQlJFd2daVk01Zm5CaUY%3D&lrd=0x39f4e195a816671d:0xa9ebf12893abb828,1,,,,"
+  );
+
+  React.useEffect(() => {
+    fetch("/api/settings/google-review-url")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.url) setGoogleReviewUrl(data.url);
+      })
+      .catch((err) => console.error("Failed to fetch Google Review URL:", err));
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -507,28 +521,60 @@ export function PublicFeedbackForm() {
               Thank you for registering. Your visit information has been saved.
             </p>
 
-            <button
-              onClick={() => setSubmitted(false)}
-              style={{
-                padding: "9px 18px",
-                borderRadius: "8px",
-                fontSize: "13px",
-                fontWeight: 600,
-                backgroundColor: "#FFFFFF",
-                color: "#4A4A4A",
-                border: "1px solid #E2E8F0",
-                cursor: "pointer",
-                transition: "background-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#DDF4E8";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#FFFFFF";
-              }}
-            >
-              Submit Another Entry
-            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", width: "100%" }}>
+              {/* Primary: Leave Google Review */}
+              <a
+                href={googleReviewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "12px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  backgroundColor: "#0E9A51",
+                  color: "#FFFFFF",
+                  textDecoration: "none",
+                  boxShadow: "0 2px 4px rgba(14, 154, 81, 0.2)",
+                  transition: "opacity 0.15s ease",
+                  boxSizing: "border-box",
+                }}
+              >
+                <Star style={{ width: "18px", height: "18px", fill: "#FFD700", color: "#FFD700" }} />
+                <span>Review us on Google</span>
+                <ExternalLink style={{ width: "16px", height: "16px", opacity: 0.9 }} />
+              </a>
+
+              {/* Secondary: Submit Another Entry */}
+              <button
+                onClick={() => setSubmitted(false)}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  backgroundColor: "transparent",
+                  color: "#4A4A4A",
+                  border: "1px solid #E2E8F0",
+                  cursor: "pointer",
+                  width: "100%",
+                  transition: "background-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                Submit Another Entry
+              </button>
+            </div>
           </div>
         )}
 
