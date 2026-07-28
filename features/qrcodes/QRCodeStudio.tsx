@@ -11,9 +11,7 @@ export function QRCodeStudio() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
-    const defaultUrl = `${origin}/`;
-    setTargetUrl(defaultUrl);
+    setTargetUrl("https://qr-code-beta-bice.vercel.app/feedback");
   }, []);
 
   useEffect(() => {
