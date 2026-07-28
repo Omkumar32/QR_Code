@@ -36,21 +36,25 @@ export async function getAdminSession(): Promise<AdminSession | null> {
 
 export async function createAdminSession(adminId: string) {
   const cookieStore = await cookies();
+  const isProduction = process.env.NODE_ENV === "production";
+
   cookieStore.set(ADMIN_COOKIE, `${adminId}:session`, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 24 * 7, // 7 days
   });
 }
 
 export async function clearAdminSession() {
   const cookieStore = await cookies();
+  const isProduction = process.env.NODE_ENV === "production";
+
   cookieStore.set(ADMIN_COOKIE, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/",
     maxAge: 0,
   });

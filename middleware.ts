@@ -1,25 +1,35 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const ADMIN_COOKIE = "admin_feedback_session";
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect /admin routes (except /admin/login)
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
-    const sessionCookie = request.cookies.get("admin_feedback_session")?.value;
-    if (!sessionCookie) {
-      const loginUrl = new URL("/admin/login", request.url);
-      return NextResponse.redirect(loginUrl);
-    }
+  // Only handle /admin routes
+  if (!pathname.startsWith("/admin")) {
+    return NextResponse.next();
   }
 
-  // Redirect authenticated admins away from /admin/login to /admin/dashboard
+  const sessionCookie = request.cookies.get(ADMIN_COOKIE)?.value;
+  const isLoggedIn = sessionCookie && sessionCookie.length > 10;
+
+  // Already on login page
   if (pathname === "/admin/login") {
-    const sessionCookie = request.cookies.get("admin_feedback_session")?.value;
-    if (sessionCookie) {
-      const dashboardUrl = new URL("/admin/dashboard", request.url);
-      return NextResponse.redirect(dashboardUrl);
+    // If logged in, redirect to dashboard
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
+    // Otherwise allow through
+    return NextResponse.next();
+  }
+
+  // Protect all other /admin/* routes
+  if (!isLoggedIn) {
+    const loginUrl = new URL("/admin/login", request.url);
+    // Pass current path so we can redirect back after login
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
