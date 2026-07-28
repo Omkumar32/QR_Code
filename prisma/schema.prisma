@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 model Feedback {
@@ -12,8 +13,8 @@ model Feedback {
   name      String
   email     String
   phone     String
-  reason    String   // Service, Product, Staff Behaviour, Website, Complaint, Suggestion, Other
-  rating    Int      // 1-5 Stars
+  reason    String
+  rating    Int
   message   String
   createdAt DateTime @default(now())
 }
