@@ -213,6 +213,7 @@ export function PublicFeedbackForm() {
                   <input
                     required
                     type="text"
+                    placeholder="Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     style={{
@@ -329,6 +330,7 @@ export function PublicFeedbackForm() {
                   />
                   <input
                     type="email"
+                    placeholder="example@gmail.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     style={{
