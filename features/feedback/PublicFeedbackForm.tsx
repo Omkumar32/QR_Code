@@ -54,12 +54,11 @@ export function PublicFeedbackForm() {
     if (typeof window !== "undefined") {
       const lastSubmitted = localStorage.getItem("feedback_submitted_at");
       if (lastSubmitted) {
-        const diffMinutes = (Date.now() - parseInt(lastSubmitted, 10)) / (1000 * 60);
-        if (diffMinutes < 5) {
+        const diffSeconds = (Date.now() - parseInt(lastSubmitted, 10)) / 1000;
+        if (diffSeconds < 60) {
+          const remainingSecs = Math.ceil(60 - diffSeconds);
           setErrorMessage(
-            `You have already submitted your details recently. Please wait ${Math.ceil(
-              5 - diffMinutes
-            )} minute(s) before submitting again.`
+            `You have already submitted your details recently. Please wait ${remainingSecs} second(s) before submitting again.`
           );
           return;
         }
