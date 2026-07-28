@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma, ensureDbInitialized } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { feedbackFormSchema } from "@/schemas/feedback";
 
 export async function POST(request: Request) {
@@ -16,9 +16,6 @@ export async function POST(request: Request) {
     const { name, email = "", phone, reason, rating = 5, message = "Visitor Registration" } = validationResult.data;
     const finalEmail = email.trim() || "N/A";
 
-    // Ensure database tables exist in serverless environment
-    await ensureDbInitialized();
-
     // 2. Duplicate Submission Check (Within 5 Minutes for same phone or email if provided)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const existingSubmission = await prisma.feedback.findFirst({
@@ -26,6 +23,7 @@ export async function POST(request: Request) {
         OR: finalEmail !== "N/A" ? [{ email: finalEmail }, { phone }] : [{ phone }],
         createdAt: { gte: fiveMinutesAgo },
       },
+      select: { id: true },
     });
 
     if (existingSubmission) {
