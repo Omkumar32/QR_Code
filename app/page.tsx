@@ -1,5 +1,5 @@
-import { PublicFeedbackForm } from "@/features/feedback/PublicFeedbackForm";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <PublicFeedbackForm />;
+  redirect("/feedback");
 }

@@ -11,7 +11,8 @@ export function QRCodeStudio() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setTargetUrl("https://qr-code-beta-bice.vercel.app/feedback");
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://qr-code-beta-bice.vercel.app";
+    setTargetUrl(`${appUrl}/feedback`);
   }, []);
 
   useEffect(() => {
